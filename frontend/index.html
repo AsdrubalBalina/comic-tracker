@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comic Tracker</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>Comic Tracker</h1>
+    <p>Mi colección de cómics</p>
+  </header>
+
+  <main>
+    <section>
+  <h2>Añadir cómic</h2>
+
+  <form id="comic-form">
+    <div>
+      <label for="title">Título *</label>
+      <input type="text" id="title" name="title" required>
+    </div>
+
+    <div>
+      <label for="series">Serie</label>
+      <input type="text" id="series" name="series">
+    </div>
+
+    <div>
+      <label for="issue_number">Número</label>
+      <input type="text" id="issue_number" name="issue_number">
+    </div>
+
+    <div>
+      <label for="publisher">Editorial</label>
+      <input type="text" id="publisher" name="publisher">
+    </div>
+
+    <div>
+      <label for="main_character">Personaje principal</label>
+      <input type="text" id="main_character" name="main_character">
+    </div>
+
+    <div>
+      <label for="publication_year">Año de publicación</label>
+      <input type="number" id="publication_year" name="publication_year">
+    </div>
+
+    <div>
+      <label for="read_status">Estado</label>
+      <select id="read_status" name="read_status">
+        <option value="pending">Pendiente</option>
+        <option value="reading">Leyendo</option>
+        <option value="read">Leído</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="rating">Valoración</label>
+      <select id="rating" name="rating">
+        <option value="">Sin valorar</option>
+        <option value="1">1/5</option>
+        <option value="2">2/5</option>
+        <option value="3">3/5</option>
+        <option value="4">4/5</option>
+        <option value="5">5/5</option>
+      </select>
+    </div>
+
+    <button type="submit">Añadir cómic</button>
+  </form>
+
+  <p id="form-message"></p>
+</section>
+    <section>
+      <h2>Cómics</h2>
+      <div id="comic-list"></div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,63 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+header {
+  padding: 2rem;
+  text-align: center;
+}
+
+main {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+#comic-list {
+  display: grid;
+  gap: 1rem;
+}
+
+article {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+article h3 {
+  margin-top: 0;
+}
+
+form {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+form div {
+  display: grid;
+  gap: 0.25rem;
+}
+
+input,
+select,
+button {
+  padding: 0.75rem;
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.comic-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.comic-actions button {
+  padding: 0.5rem 1rem;
+}
