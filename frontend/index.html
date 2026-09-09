@@ -71,6 +71,61 @@
     <button type="submit">Añadir cómic</button>
   </form>
 
+  <section class="filters">
+  <h2>Buscar y filtrar</h2>
+
+  <div class="filter-controls">
+    <div>
+      <label for="search">Buscar</label>
+      <input
+        type="text"
+        id="search"
+        placeholder="Título, serie o personaje"
+      >
+    </div>
+
+    <div>
+      <label for="publisher-filter">Editorial</label>
+      <input
+        type="text"
+        id="publisher-filter"
+        placeholder="Ej. DC Comics"
+      >
+    </div>
+
+    <div>
+      <label for="status-filter">Estado</label>
+      <select id="status-filter">
+        <option value="">Todos</option>
+        <option value="pending">Pendiente</option>
+        <option value="reading">Leyendo</option>
+        <option value="read">Leído</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="sort">Ordenar por</label>
+      <select id="sort">
+        <option value="">Por defecto</option>
+        <option value="title_asc">Título A-Z</option>
+        <option value="title_desc">Título Z-A</option>
+        <option value="year_desc">Año: más reciente</option>
+        <option value="year_asc">Año: más antiguo</option>
+        <option value="rating_desc">Valoración: mayor</option>
+        <option value="rating_asc">Valoración: menor</option>
+      </select>
+    </div>
+
+    <button type="button" id="apply-filters">
+      Aplicar filtros
+    </button>
+
+    <button type="button" id="clear-filters">
+      Limpiar
+    </button>
+  </div>
+</section>
+
   <p id="form-message"></p>
 </section>
     <section>

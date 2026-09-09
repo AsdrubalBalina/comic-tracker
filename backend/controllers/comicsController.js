@@ -1,10 +1,74 @@
 const pool = require("../db");
 
 const getAllComics = async (req, res) => {
+  const {
+    search,
+    publisher,
+    status,
+    sort,
+  } = req.query;
+
+  let query = "SELECT * FROM comics";
+  const conditions = [];
+  const values = [];
+
+  if (search) {
+    values.push(`%${search}%`);
+
+    conditions.push(`
+      (
+        title ILIKE $${values.length}
+        OR series ILIKE $${values.length}
+        OR main_character ILIKE $${values.length}
+      )
+    `);
+  }
+
+  if (publisher) {
+    values.push(publisher);
+    conditions.push(`publisher = $${values.length}`);
+  }
+
+  if (status) {
+    values.push(status);
+    conditions.push(`read_status = $${values.length}`);
+  }
+
+  if (conditions.length > 0) {
+    query += ` WHERE ${conditions.join(" AND ")}`;
+  }
+
+  switch (sort) {
+    case "title_asc":
+      query += " ORDER BY title ASC";
+      break;
+
+    case "title_desc":
+      query += " ORDER BY title DESC";
+      break;
+
+    case "year_asc":
+      query += " ORDER BY publication_year ASC NULLS LAST";
+      break;
+
+    case "year_desc":
+      query += " ORDER BY publication_year DESC NULLS LAST";
+      break;
+
+    case "rating_asc":
+      query += " ORDER BY rating ASC NULLS LAST";
+      break;
+
+    case "rating_desc":
+      query += " ORDER BY rating DESC NULLS LAST";
+      break;
+
+    default:
+      query += " ORDER BY id";
+  }
+
   try {
-    const result = await pool.query(
-      "SELECT * FROM comics ORDER BY id"
-    );
+    const result = await pool.query(query, values);
 
     res.json(result.rows);
   } catch (error) {

@@ -61,3 +61,17 @@ button {
 .comic-actions button {
   padding: 0.5rem 1rem;
 }
+
+.filters {
+  margin-bottom: 2rem;
+}
+
+.filter-controls {
+  display: grid;
+  gap: 1rem;
+}
+
+.filter-controls div {
+  display: grid;
+  gap: 0.25rem;
+}

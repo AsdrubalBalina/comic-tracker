@@ -6,7 +6,39 @@ let editingComicId = null;
 
 async function loadComics() {
   try {
-    const response = await fetch("/api/comics");
+    const search = document.getElementById("search")?.value.trim() || "";
+    const publisher =
+      document.getElementById("publisher-filter")?.value.trim() || "";
+    const status =
+      document.getElementById("status-filter")?.value || "";
+    const sort =
+      document.getElementById("sort")?.value || "";
+
+    const params = new URLSearchParams();
+
+    if (search) {
+      params.append("search", search);
+    }
+
+    if (publisher) {
+      params.append("publisher", publisher);
+    }
+
+    if (status) {
+      params.append("status", status);
+    }
+
+    if (sort) {
+      params.append("sort", sort);
+    }
+
+    const queryString = params.toString();
+
+    const url = queryString
+      ? `/api/comics?${queryString}`
+      : "/api/comics";
+
+    const response = await fetch(url);
 
     if (!response.ok) {
       throw new Error("No se pudieron obtener los cómics");
@@ -15,6 +47,14 @@ async function loadComics() {
     const comics = await response.json();
 
     comicList.innerHTML = "";
+
+    if (comics.length === 0) {
+      comicList.innerHTML = `
+        <p>No se encontraron cómics.</p>
+      `;
+
+      return;
+    }
 
     comics.forEach((comic) => {
       const comicElement = document.createElement("article");
@@ -217,5 +257,24 @@ async function deleteComic(id) {
       "Error al eliminar el cómic.";
   }
 }
+
+const applyFiltersButton =
+  document.getElementById("apply-filters");
+
+const clearFiltersButton =
+  document.getElementById("clear-filters");
+
+applyFiltersButton.addEventListener("click", () => {
+  loadComics();
+});
+
+clearFiltersButton.addEventListener("click", () => {
+  document.getElementById("search").value = "";
+  document.getElementById("publisher-filter").value = "";
+  document.getElementById("status-filter").value = "";
+  document.getElementById("sort").value = "";
+
+  loadComics();
+});
 
 loadComics();
