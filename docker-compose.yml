@@ -16,5 +16,21 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
 
+  postgres-test:
+    image: postgres:16
+    container_name: comic-tracker-test-db
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: comic_user
+      POSTGRES_PASSWORD: comic_password
+      POSTGRES_DB: comic_tracker_test
+
+    ports:
+      - "5433:5432"
+
+    volumes:
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+
 volumes:
   postgres_data:
