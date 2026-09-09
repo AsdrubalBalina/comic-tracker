@@ -75,3 +75,52 @@ button {
   display: grid;
   gap: 0.25rem;
 }
+
+#comic-list {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(220px, 1fr)
+  );
+  gap: 1.5rem;
+}
+
+.comic-cover {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  object-fit: cover;
+  border-radius: 6px;
+}
+
+.comic-cover-placeholder {
+  width: 100%;
+  aspect-ratio: 2 / 3;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #eee;
+  border-radius: 6px;
+}
+
+.add-comic-button {
+  position: fixed;
+  right: 2rem;
+  bottom: 2rem;
+
+  padding: 1rem 1.5rem;
+  border-radius: 999px;
+
+  background: #222;
+  color: white;
+
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 2rem;
+  text-decoration: none;
+}

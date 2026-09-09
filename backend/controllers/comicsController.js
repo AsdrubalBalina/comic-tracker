@@ -112,6 +112,9 @@ const createComic = async (req, res) => {
     issue_number,
     publisher,
     main_character,
+    writer,
+    artist,
+    cover_url,
     publication_year,
     read_status,
     rating,
@@ -125,29 +128,35 @@ const createComic = async (req, res) => {
 
   try {
     const result = await pool.query(
-      `INSERT INTO comics (
-        title,
-        series,
-        issue_number,
-        publisher,
-        main_character,
-        publication_year,
-        read_status,
-        rating
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      RETURNING *`,
-      [
-        title,
-        series,
-        issue_number,
-        publisher,
-        main_character,
-        publication_year,
-        read_status || "pending",
-        rating,
-      ]
-    );
+  `INSERT INTO comics (
+    title,
+    series,
+    issue_number,
+    publisher,
+    main_character,
+    writer,
+    artist,
+    cover_url,
+    publication_year,
+    read_status,
+    rating
+  )
+  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+  RETURNING *`,
+  [
+    title,
+    series,
+    issue_number,
+    publisher,
+    main_character,
+    writer,
+    artist,
+    cover_url,
+    publication_year,
+    read_status || "pending",
+    rating,
+  ]
+);
 
     res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -168,6 +177,9 @@ const updateComic = async (req, res) => {
     issue_number,
     publisher,
     main_character,
+    writer,
+    artist,
+    cover_url,
     publication_year,
     read_status,
     rating,
@@ -181,28 +193,34 @@ const updateComic = async (req, res) => {
 
   try {
     const result = await pool.query(
-      `UPDATE comics
-       SET title = $1,
-           series = $2,
-           issue_number = $3,
-           publisher = $4,
-           main_character = $5,
-           publication_year = $6,
-           read_status = $7,
-           rating = $8
-       WHERE id = $9
-       RETURNING *`,
-      [
+    `UPDATE comics
+    SET title = $1,
+        series = $2,
+        issue_number = $3,
+        publisher = $4,
+        main_character = $5,
+        writer = $6,
+        artist = $7,
+        cover_url = $8,
+        publication_year = $9,
+        read_status = $10,
+        rating = $11
+    WHERE id = $12
+    RETURNING *`,
+    [
         title,
         series,
         issue_number,
         publisher,
         main_character,
+        writer,
+        artist,
+        cover_url,
         publication_year,
         read_status,
         rating,
         id,
-      ]
+    ]
     );
 
     if (result.rows.length === 0) {
