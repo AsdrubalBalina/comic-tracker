@@ -1,5 +1,14 @@
+const dotenv = require("dotenv");
+
+if (process.env.NODE_ENV === "test") {
+  dotenv.config({ path: ".env.test" });
+} else {
+  dotenv.config({ path: ".env" });
+}
+
 const express = require("express");
 const path = require("path");
+const catalogRoutes = require("./routes/catalogRoutes");
 const comicsRoutes = require("./routes/comicsRoutes");
 
 const app = express();
@@ -13,5 +22,6 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/comics", comicsRoutes);
+app.use("/api/catalog", catalogRoutes);
 
 module.exports = app;

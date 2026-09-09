@@ -4,6 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Añadir cómic | Comic Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+  href="https://fonts.googleapis.com/css2?family=Bangers&family=Barlow+Condensed:wght@400;500;600;700;800&family=Bowlby+One+SC&display=swap"
+  rel="stylesheet"
+>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -19,7 +25,45 @@
     <a href="/" class="back-link">
       ← Volver a mi colección
     </a>
+    <section class="catalog-search">
+    <div class="catalog-search-heading">
+        <span class="section-kicker">CATÁLOGO EXTERNO</span>
+        <h2>Buscar un cómic</h2>
+        <p>
+        Busca en Metron y completa automáticamente los datos
+        antes de añadirlo a tu colección.
+        </p>
+    </div>
 
+    <form id="catalog-search-form" class="catalog-search-form">
+        <label for="catalog-query">Serie</label>
+
+        <div class="catalog-search-row">
+        <input
+            type="search"
+            id="catalog-query"
+            placeholder="Ej. Batman, Daredevil, Amazing Spider-Man..."
+            autocomplete="off"
+            required
+        >
+
+        <button type="submit">
+            Buscar
+        </button>
+        </div>
+    </form>
+
+    <p id="catalog-message" class="catalog-message"></p>
+
+    <div
+        id="catalog-results"
+        class="catalog-results"
+    ></div>
+    </section>
+
+    <div class="manual-divider">
+    <span>O AÑADIR MANUALMENTE</span>
+    </div>
     <form id="comic-form">
       <div>
         <label for="title">Título *</label>
@@ -51,7 +95,7 @@
         <input
           type="text"
           id="writer"
-          placeholder="Ej. Frank Miller"
+          placeholder="Ej. Stan Lee"
         >
       </div>
 
@@ -60,7 +104,7 @@
         <input
           type="text"
           id="artist"
-          placeholder="Ej. David Mazzucchelli"
+          placeholder="Ej. Jack Kirby"
         >
       </div>
 
