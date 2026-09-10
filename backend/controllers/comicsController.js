@@ -486,6 +486,271 @@ async function importComic(req, res) {
   }
 }
 
+async function importComicsBatch(
+  req,
+  res
+) {
+  const { externalIds } =
+    req.body;
+
+  if (
+    !Array.isArray(externalIds) ||
+    externalIds.length === 0
+  ) {
+    return res.status(400).json({
+      error:
+        "externalIds debe ser una lista no vacía",
+    });
+  }
+
+  const uniqueIds = [
+    ...new Set(
+      externalIds.map(Number)
+    ),
+  ].filter(Number.isInteger);
+
+  if (!uniqueIds.length) {
+    return res.status(400).json({
+      error:
+        "No se recibieron identificadores válidos",
+    });
+  }
+
+  const results = {
+    imported: [],
+    duplicates: [],
+    failed: [],
+  };
+
+  for (const externalId of uniqueIds) {
+    try {
+      const existing =
+        await pool.query(
+          `
+          SELECT id
+          FROM comics
+          WHERE external_source = $1
+            AND external_id = $2
+          `,
+          [
+            "metron",
+            externalId,
+          ]
+        );
+
+      if (
+        existing.rows.length > 0
+      ) {
+        results.duplicates.push(
+          externalId
+        );
+
+        continue;
+      }
+
+      const issue =
+        await getIssueById(
+          externalId
+        );
+
+      const client =
+        await pool.connect();
+
+      try {
+        await client.query(
+          "BEGIN"
+        );
+
+        const writers =
+          issue.creators
+            .filter(
+              (creator) =>
+                creator.role ===
+                "Writer"
+            )
+            .map(
+              (creator) =>
+                creator.name
+            );
+
+        const artists =
+          issue.creators
+            .filter(
+              (creator) =>
+                creator.role ===
+                "Artist"
+            )
+            .map(
+              (creator) =>
+                creator.name
+            );
+
+        const comicResult =
+          await client.query(
+            `
+            INSERT INTO comics (
+              title,
+              series,
+              issue_number,
+              publisher,
+              writer,
+              artist,
+              cover_url,
+              publication_year,
+              external_id,
+              external_source,
+              description,
+              store_date
+            )
+            VALUES (
+              $1, $2, $3, $4,
+              $5, $6, $7, $8,
+              $9, $10, $11, $12
+            )
+            RETURNING *
+            `,
+            [
+              issue.series?.name ||
+                issue.displayName ||
+                "Sin título",
+              issue.series?.name ||
+                null,
+              issue.issueNumber ||
+                null,
+              issue.publisher ||
+                null,
+              writers.join(", ") ||
+                null,
+              artists.join(", ") ||
+                null,
+              issue.coverUrl ||
+                null,
+              issue.publicationYear ||
+                null,
+              externalId,
+              "metron",
+              issue.description ||
+                null,
+              issue.storeDate ||
+                null,
+            ]
+          );
+
+        const comic =
+          comicResult.rows[0];
+
+        for (
+          const creator
+          of issue.creators
+        ) {
+          const creatorResult =
+            await client.query(
+              `
+              INSERT INTO creators (
+                name,
+                metron_id
+              )
+              VALUES ($1, $2)
+              ON CONFLICT (metron_id)
+              DO UPDATE SET
+                name =
+                  EXCLUDED.name
+              RETURNING id
+              `,
+              [
+                creator.name,
+                creator.externalId,
+              ]
+            );
+
+          const creatorId =
+            creatorResult.rows[0].id;
+
+          await client.query(
+            `
+            INSERT INTO comic_creators (
+              comic_id,
+              creator_id,
+              role
+            )
+            VALUES ($1, $2, $3)
+            ON CONFLICT DO NOTHING
+            `,
+            [
+              comic.id,
+              creatorId,
+              creator.role,
+            ]
+          );
+        }
+
+        await client.query(
+          "COMMIT"
+        );
+
+        results.imported.push(
+          externalId
+        );
+
+      } catch (error) {
+        await client.query(
+          "ROLLBACK"
+        );
+
+        if (
+          error.code === "23505" &&
+          error.constraint ===
+            "unique_external_comic"
+        ) {
+          results.duplicates.push(
+            externalId
+          );
+        } else {
+          console.error(
+            `Error importando ${externalId}:`,
+            error
+          );
+
+          results.failed.push(
+            externalId
+          );
+        }
+
+      } finally {
+        client.release();
+      }
+
+    } catch (error) {
+      console.error(
+        `Error procesando ${externalId}:`,
+        error
+      );
+
+      results.failed.push(
+        externalId
+      );
+    }
+  }
+
+  return res.status(200).json({
+    imported:
+      results.imported,
+    duplicates:
+      results.duplicates,
+    failed:
+      results.failed,
+
+    summary: {
+      imported:
+        results.imported.length,
+      duplicates:
+        results.duplicates.length,
+      failed:
+        results.failed.length,
+    },
+  });
+}
+
 module.exports = {
   getAllComics,
   getComicById,
@@ -493,4 +758,5 @@ module.exports = {
   updateComic,
   deleteComic,
   importComic,
+  importComicsBatch,
 };

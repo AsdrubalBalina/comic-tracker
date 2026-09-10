@@ -2568,3 +2568,68 @@ body:has(#comic-form) > main {
     font-size: 1rem;
   }
 }
+
+.catalog-batch-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+
+  margin: 1.2rem 0;
+  padding: 0.8rem;
+
+  background: var(--yellow);
+  border: 3px solid var(--ink);
+  box-shadow: var(--small-shadow);
+}
+
+.catalog-batch-actions[hidden] {
+  display: none;
+}
+
+.catalog-batch-actions button {
+  padding: 0.6rem 0.85rem;
+
+  border: 3px solid var(--ink);
+
+  font-family:
+    "Barlow Condensed",
+    sans-serif;
+
+  font-weight: 800;
+  text-transform: uppercase;
+
+  cursor: pointer;
+}
+
+.catalog-batch-actions button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.catalog-selection {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+
+  margin: 0.4rem 0 0.7rem;
+
+  font-family:
+    "Barlow Condensed",
+    sans-serif;
+
+  font-weight: 800;
+  text-transform: uppercase;
+
+  cursor: pointer;
+}
+
+.catalog-selection input {
+  width: 18px;
+  height: 18px;
+}
+
+.catalog-selection.disabled {
+  opacity: 0.5;
+  cursor: default;
+}

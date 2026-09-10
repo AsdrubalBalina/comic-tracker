@@ -76,8 +76,36 @@
     <p id="catalog-message" class="catalog-message"></p>
 
     <div
-        id="catalog-results"
-        class="catalog-results"
+      id="catalog-batch-actions"
+      class="catalog-batch-actions"
+      hidden
+    >
+      <button
+        type="button"
+        id="catalog-select-page"
+      >
+        Seleccionar página
+      </button>
+
+      <button
+        type="button"
+        id="catalog-clear-selection"
+      >
+        Limpiar selección
+      </button>
+
+      <button
+        type="button"
+        id="catalog-import-selected"
+        disabled
+      >
+        Añadir seleccionados (0)
+      </button>
+    </div>
+
+    <div
+      id="catalog-results"
+      class="catalog-results"
     ></div>
     <div
       id="catalog-pagination"

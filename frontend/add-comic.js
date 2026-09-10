@@ -5,6 +5,7 @@ const pageTitle = document.querySelector("h1");
 const submitButton = comicForm.querySelector(
   'button[type="submit"]'
 );
+const selectedCatalogIds = new Set();
 
 const params = new URLSearchParams(window.location.search);
 const comicId = params.get("id");
@@ -38,6 +39,26 @@ const catalogNext =
 
 const catalogPageInfo =
   document.getElementById("catalog-page-info");
+
+const catalogBatchActions =
+  document.getElementById(
+    "catalog-batch-actions"
+  );
+
+const catalogSelectPage =
+  document.getElementById(
+    "catalog-select-page"
+  );
+
+const catalogClearSelection =
+  document.getElementById(
+    "catalog-clear-selection"
+  );
+
+const catalogImportSelected =
+  document.getElementById(
+    "catalog-import-selected"
+  );
 
 let currentCatalogPage = 1;
 
@@ -255,36 +276,109 @@ function createCatalogResult(issue, collectionIds) {
     collectionIds.has(
       Number(issue.externalId)
     );
+  const selectionLabel =
+  document.createElement("label");
+
+selectionLabel.classList.add(
+  "catalog-selection"
+);
+
+const checkbox =
+  document.createElement("input");
+
+checkbox.type = "checkbox";
+
+checkbox.value =
+  issue.externalId;
+
+checkbox.dataset.externalId =
+  issue.externalId;
 
   if (alreadyAdded) {
-    button.textContent =
-      "Ya en tu colección";
+  button.textContent =
+    "Ya en tu colección";
 
-    button.disabled = true;
-  } else {
-    button.textContent =
-      "Añadir a mi colección";
+  button.disabled = true;
 
-    button.addEventListener(
-      "click",
-      async () => {
-        const imported =
-          await importComicFromCatalog(
-            issue.externalId,
-            button
-          );
+  checkbox.disabled = true;
 
-        if (imported) {
-          collectionIds.add(
-            Number(issue.externalId)
-          );
-        }
-      }
+  selectionLabel.classList.add(
+    "disabled"
+  );
+
+} else {
+  button.textContent =
+    "Añadir a mi colección";
+
+  checkbox.checked =
+    selectedCatalogIds.has(
+      Number(issue.externalId)
     );
-  }
+
+  checkbox.addEventListener(
+    "change",
+    () => {
+      const id =
+        Number(issue.externalId);
+
+      if (checkbox.checked) {
+        selectedCatalogIds.add(id);
+      } else {
+        selectedCatalogIds.delete(id);
+      }
+
+      updateBatchControls();
+    }
+  );
+
+  button.addEventListener(
+    "click",
+    async () => {
+      const imported =
+        await importComicFromCatalog(
+          issue.externalId,
+          button
+        );
+
+      if (imported) {
+        collectionIds.add(
+          Number(issue.externalId)
+        );
+
+        selectedCatalogIds.delete(
+          Number(issue.externalId)
+        );
+
+        checkbox.checked = false;
+        checkbox.disabled = true;
+
+        updateBatchControls();
+      }
+    }
+  );
+}
+
+  selectionLabel.appendChild(
+  checkbox
+);
+
+  const selectionText =
+    document.createElement("span");
+
+  selectionText.textContent =
+    alreadyAdded
+      ? "Añadido"
+      : "Seleccionar";
+
+  selectionLabel.appendChild(
+    selectionText
+  );
+
+
 
   info.appendChild(title);
   info.appendChild(metadata);
+  info.appendChild(selectionLabel);
   info.appendChild(button);
 
   article.appendChild(coverContainer);
@@ -325,6 +419,7 @@ async function searchCatalog(
 ) {
   catalogResults.replaceChildren();
   catalogPagination.hidden = true;
+  catalogBatchActions.hidden = true;
 
   catalogMessage.textContent =
     "Buscando en el catálogo...";
@@ -374,11 +469,14 @@ async function searchCatalog(
       await getCollectionExternalIds();
 
     if (!data.results.length) {
+      catalogBatchActions.hidden = false;
       catalogMessage.textContent =
         "No se encontraron resultados.";
 
       return;
     }
+
+    catalogBatchActions.hidden = false;
 
     currentCatalogPage = Number(page);
 
@@ -399,6 +497,8 @@ async function searchCatalog(
         )
       );
     });
+
+    updateBatchControls();
 
     catalogPageInfo.textContent =
       `Página ${currentCatalogPage}`;
@@ -666,5 +766,154 @@ async function importComicFromCatalog(
     return false;
   }
 }
+
+async function importSelectedComics() {
+  if (
+    selectedCatalogIds.size === 0
+  ) {
+    return;
+  }
+
+  const externalIds = [
+    ...selectedCatalogIds,
+  ];
+
+  catalogImportSelected.disabled =
+    true;
+
+  catalogImportSelected.textContent =
+    "Añadiendo...";
+
+  catalogMessage.textContent =
+    `Importando ${externalIds.length} cómics...`;
+
+  try {
+    const response = await fetch(
+      "/api/comics/import-batch",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+        body: JSON.stringify({
+          externalIds,
+        }),
+      }
+    );
+
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+          "No se pudieron importar los cómics"
+      );
+    }
+
+    const {
+      imported,
+      duplicates,
+      failed,
+    } = data.summary;
+
+    catalogMessage.textContent =
+      `${imported} añadidos · ` +
+      `${duplicates} ya estaban · ` +
+      `${failed} errores`;
+
+    data.imported.forEach(
+      (id) => {
+        selectedCatalogIds.delete(
+          Number(id)
+        );
+      }
+    );
+
+    data.duplicates.forEach(
+      (id) => {
+        selectedCatalogIds.delete(
+          Number(id)
+        );
+      }
+    );
+
+    await searchCatalog(
+      currentCatalogSearch.series,
+      currentCatalogSearch.number,
+      currentCatalogSearch.year,
+      currentCatalogPage
+    );
+
+  } catch (error) {
+    console.error(error);
+
+    catalogMessage.textContent =
+      "No se pudo completar la importación.";
+  }
+
+  updateBatchControls();
+}
+
+function updateBatchControls() {
+  const count =
+    selectedCatalogIds.size;
+
+  catalogImportSelected.textContent =
+    `Añadir seleccionados (${count})`;
+
+  catalogImportSelected.disabled =
+    count === 0;
+}
+
+catalogSelectPage.addEventListener(
+  "click",
+  () => {
+    const checkboxes =
+      catalogResults.querySelectorAll(
+        '.catalog-selection input:not(:disabled)'
+      );
+
+    checkboxes.forEach(
+      (checkbox) => {
+        checkbox.checked = true;
+
+        selectedCatalogIds.add(
+          Number(
+            checkbox.dataset.externalId
+          )
+        );
+      }
+    );
+
+    updateBatchControls();
+  }
+);
+
+catalogClearSelection.addEventListener(
+  "click",
+  () => {
+    selectedCatalogIds.clear();
+
+    const checkboxes =
+      catalogResults.querySelectorAll(
+        ".catalog-selection input"
+      );
+
+    checkboxes.forEach(
+      (checkbox) => {
+        checkbox.checked = false;
+      }
+    );
+
+    updateBatchControls();
+  }
+);
+
+catalogImportSelected.addEventListener(
+  "click",
+  importSelectedComics
+);
 
 loadComicForEditing();
