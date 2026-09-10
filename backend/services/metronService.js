@@ -87,6 +87,7 @@ async function searchIssues({
   seriesName,
   number,
   year,
+  page = 1
 }) {
   const params = new URLSearchParams();
 
@@ -99,8 +100,10 @@ async function searchIssues({
   }
 
   if (year) {
-    params.append("series_year_began", year);
+    params.append("cover_year", year);
   }
+
+  params.append("page", String(page) );
 
   const response = await fetch(
     `${METRON_BASE_URL}/issue/?${params.toString()}`,

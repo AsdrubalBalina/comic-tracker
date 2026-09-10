@@ -12,6 +12,7 @@ router.get("/search", async (req, res) => {
       series,
       number,
       year,
+      page = 1,
     } = req.query;
 
     if (!series) {
@@ -24,14 +25,20 @@ router.get("/search", async (req, res) => {
       seriesName: series,
       number,
       year,
+      page,
     });
 
-    res.json(data);
-  } catch (error) {
-    console.error("Error consultando Metron:", error);
+    return res.json(data);
 
-    res.status(500).json({
-      error: "No se pudo consultar el catálogo externo",
+  } catch (error) {
+    console.error(
+      "Error buscando en Metron:",
+      error
+    );
+
+    return res.status(500).json({
+      error:
+        "No se pudo consultar el catálogo",
     });
   }
 });

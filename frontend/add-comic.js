@@ -15,11 +15,37 @@ const catalogSearchForm =
 const catalogQuery =
   document.getElementById("catalog-query");
 
+const catalogNumber =
+  document.getElementById("catalog-number");
+
+const catalogYear =
+  document.getElementById("catalog-year");
+
 const catalogResults =
   document.getElementById("catalog-results");
 
 const catalogMessage =
   document.getElementById("catalog-message");
+
+const catalogPagination =
+  document.getElementById("catalog-pagination");
+
+const catalogPrevious =
+  document.getElementById("catalog-previous");
+
+const catalogNext =
+  document.getElementById("catalog-next");
+
+const catalogPageInfo =
+  document.getElementById("catalog-page-info");
+
+let currentCatalogPage = 1;
+
+let currentCatalogSearch = {
+  series: "",
+  number: "",
+  year: "",
+};
 
 async function loadComicForEditing() {
   if (!comicId) {
@@ -70,8 +96,8 @@ async function loadComicForEditing() {
 
     pageTitle.textContent = "Editar cómic";
     submitButton.textContent = "Guardar cambios";
-    pageDescription.textContent = "Modifica los datos de tu cómic";
-
+    pageDescription.textContent =
+      "Modifica los datos de tu cómic";
   } catch (error) {
     console.error(error);
 
@@ -148,7 +174,6 @@ comicForm.addEventListener("submit", async (event) => {
     }
 
     window.location.href = "/";
-
   } catch (error) {
     console.error(error);
 
@@ -168,7 +193,12 @@ function createCatalogResult(issue, collectionIds) {
     const image = document.createElement("img");
 
     image.src = issue.coverUrl;
-    image.alt = `Portada de ${issue.displayName}`;
+    image.alt = `Portada de ${
+      issue.displayName ||
+      issue.series?.name ||
+      "cómic"
+    }`;
+
     image.loading = "lazy";
 
     image.addEventListener("error", () => {
@@ -192,6 +222,7 @@ function createCatalogResult(issue, collectionIds) {
   info.classList.add("catalog-result-info");
 
   const title = document.createElement("h3");
+
   title.textContent =
     issue.series?.name ||
     issue.displayName ||
@@ -200,47 +231,57 @@ function createCatalogResult(issue, collectionIds) {
   const metadata = document.createElement("p");
   metadata.classList.add("catalog-result-metadata");
 
-  const parts = [];
+  const issueYear = issue.coverDate
+    ? issue.coverDate.slice(0, 4)
+    : "Año desconocido";
 
-  if (issue.issueNumber) {
-    parts.push(`#${issue.issueNumber}`);
-  }
+  const issueNumber = issue.issueNumber
+    ? `#${issue.issueNumber}`
+    : "Número desconocido";
 
-  if (issue.series?.yearBegan) {
-    parts.push(issue.series.yearBegan);
-  }
+  metadata.textContent =
+    `${issueNumber} · ${issueYear}`;
 
-  metadata.textContent = parts.join(" · ");
-
-  const button = document.createElement("button");
+  const button =
+    document.createElement("button");
 
   button.type = "button";
-  button.classList.add("catalog-select-button");
+
+  button.classList.add(
+    "catalog-select-button"
+  );
 
   const alreadyAdded =
-  collectionIds.has(Number(issue.externalId));
-
-  if (alreadyAdded) {
-  button.textContent = "Ya en tu colección";
-  button.disabled = true;
-} else {
-  button.textContent = "Añadir a mi colección";
-
-  button.addEventListener("click", async () => {
-    await importComicFromCatalog(
-      issue.externalId,
-      button
-    );
-
-    collectionIds.add(
+    collectionIds.has(
       Number(issue.externalId)
     );
-  });
-}
 
-  button.addEventListener("click", async () => {
-    await importComicFromCatalog(issue.externalId, button);
-  });
+  if (alreadyAdded) {
+    button.textContent =
+      "Ya en tu colección";
+
+    button.disabled = true;
+  } else {
+    button.textContent =
+      "Añadir a mi colección";
+
+    button.addEventListener(
+      "click",
+      async () => {
+        const imported =
+          await importComicFromCatalog(
+            issue.externalId,
+            button
+          );
+
+        if (imported) {
+          collectionIds.add(
+            Number(issue.externalId)
+          );
+        }
+      }
+    );
+  }
 
   info.appendChild(title);
   info.appendChild(metadata);
@@ -276,16 +317,45 @@ async function getCollectionExternalIds() {
   );
 }
 
-async function searchCatalog(series) {
+async function searchCatalog(
+  series,
+  number,
+  year,
+  page = 1
+) {
   catalogResults.replaceChildren();
+  catalogPagination.hidden = true;
 
   catalogMessage.textContent =
     "Buscando en el catálogo...";
 
   try {
-    const params = new URLSearchParams({
-      series,
-    });
+    const params =
+      new URLSearchParams();
+
+    params.append(
+      "series",
+      series
+    );
+
+    if (number) {
+      params.append(
+        "number",
+        number
+      );
+    }
+
+    if (year) {
+      params.append(
+        "year",
+        year
+      );
+    }
+
+    params.append(
+      "page",
+      page
+    );
 
     const response = await fetch(
       `/api/catalog/search?${params.toString()}`
@@ -297,10 +367,11 @@ async function searchCatalog(series) {
       );
     }
 
-    const data = await response.json();
-    const collectionIds = await getCollectionExternalIds();
+    const data =
+      await response.json();
 
-    catalogMessage.textContent = "";
+    const collectionIds =
+      await getCollectionExternalIds();
 
     if (!data.results.length) {
       catalogMessage.textContent =
@@ -309,19 +380,51 @@ async function searchCatalog(series) {
       return;
     }
 
+    currentCatalogPage = Number(page);
+
+    currentCatalogSearch = {
+      series,
+      number,
+      year,
+    };
+
+    catalogMessage.textContent =
+      `${data.count} resultados encontrados`;
+
     data.results.forEach((issue) => {
-    catalogResults.appendChild(
-      createCatalogResult(
-        issue,
-        collectionIds
-      )
-    );
-  });
+      catalogResults.appendChild(
+        createCatalogResult(
+          issue,
+          collectionIds
+        )
+      );
+    });
+
+    catalogPageInfo.textContent =
+      `Página ${currentCatalogPage}`;
+
+    catalogPrevious.disabled =
+    data.previous === null;
+
+    catalogNext.disabled =
+    data.next === null;
+
+    catalogPagination.hidden =
+    data.previous === null && data.next === null;
+    
+    catalogResults.scrollIntoView({
+      behavior: "auto",
+      block: "start",
+    });
+    
+
   } catch (error) {
     console.error(error);
 
     catalogMessage.textContent =
       "No se pudo consultar Metron.";
+
+    catalogPagination.hidden = true;
   }
 }
 
@@ -340,7 +443,8 @@ async function loadCatalogIssue(id) {
       );
     }
 
-    const issue = await response.json();
+    const issue =
+      await response.json();
 
     fillFormFromCatalog(issue);
 
@@ -361,30 +465,37 @@ async function loadCatalogIssue(id) {
   }
 }
 
-function getCreatorNamesByRole(creators, role) {
+function getCreatorNamesByRole(
+  creators,
+  role
+) {
   return [
     ...new Set(
       creators
         .filter(
-          (creator) => creator.role === role
+          (creator) =>
+            creator.role === role
         )
         .map(
-          (creator) => creator.name
+          (creator) =>
+            creator.name
         )
     ),
   ];
 }
 
 function fillFormFromCatalog(issue) {
-  const writers = getCreatorNamesByRole(
-    issue.creators,
-    "Writer"
-  );
+  const writers =
+    getCreatorNamesByRole(
+      issue.creators,
+      "Writer"
+    );
 
-  const artists = getCreatorNamesByRole(
-    issue.creators,
-    "Artist"
-  );
+  const artists =
+    getCreatorNamesByRole(
+      issue.creators,
+      "Artist"
+    );
 
   document.getElementById("title").value =
     issue.series?.name || "";
@@ -418,13 +529,53 @@ catalogSearchForm.addEventListener(
   (event) => {
     event.preventDefault();
 
-    const query = catalogQuery.value.trim();
+    const query =
+      catalogQuery.value.trim();
+
+    const number =
+      catalogNumber.value.trim();
+
+    const year =
+      catalogYear.value.trim();
 
     if (!query) {
       return;
     }
 
-    searchCatalog(query);
+    searchCatalog(
+      query,
+      number,
+      year,
+      1
+    );
+  }
+);
+
+catalogPrevious.addEventListener(
+  "click",
+  () => {
+    if (currentCatalogPage <= 1) {
+      return;
+    }
+
+    searchCatalog(
+      currentCatalogSearch.series,
+      currentCatalogSearch.number,
+      currentCatalogSearch.year,
+      currentCatalogPage - 1
+    );
+  }
+);
+
+catalogNext.addEventListener(
+  "click",
+  () => {
+    searchCatalog(
+      currentCatalogSearch.series,
+      currentCatalogSearch.number,
+      currentCatalogSearch.year,
+      currentCatalogPage + 1
+    );
   }
 );
 
@@ -432,10 +583,22 @@ async function importComicFromCatalog(
   externalId,
   button
 ) {
-  const originalText = button.textContent;
+  if (
+    button.dataset.importing === "true"
+  ) {
+    return false;
+  }
+
+  button.dataset.importing =
+    "true";
+
+  const originalText =
+    button.textContent;
 
   button.disabled = true;
-  button.textContent = "Añadiendo...";
+
+  button.textContent =
+    "Añadiendo...";
 
   catalogMessage.textContent =
     "Añadiendo cómic a tu colección...";
@@ -446,7 +609,8 @@ async function importComicFromCatalog(
       {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type":
+            "application/json",
         },
         body: JSON.stringify({
           externalId,
@@ -454,16 +618,19 @@ async function importComicFromCatalog(
       }
     );
 
-    const data = await response.json();
+    const data =
+      await response.json();
 
     if (response.status === 409) {
       catalogMessage.textContent =
-      "Este cómic ya está en tu colección.";
+        "Este cómic ya está en tu colección.";
 
-      button.textContent = "Ya en tu colección";
+      button.textContent =
+        "Ya en tu colección";
+
       button.disabled = true;
 
-      return;
+      return true;
     }
 
     if (!response.ok) {
@@ -473,11 +640,15 @@ async function importComicFromCatalog(
       );
     }
 
-    catalogMessage.textContent = "Cómic añadido correctamente.";
+    catalogMessage.textContent =
+      "Cómic añadido correctamente.";
 
-    button.textContent = "Ya en tu colección";
+    button.textContent =
+      "Ya en tu colección";
+
     button.disabled = true;
-    
+
+    return true;
   } catch (error) {
     console.error(error);
 
@@ -485,7 +656,14 @@ async function importComicFromCatalog(
       "No se pudo añadir el cómic.";
 
     button.disabled = false;
-    button.textContent = originalText;
+
+    button.textContent =
+      originalText;
+
+    button.dataset.importing =
+      "false";
+
+    return false;
   }
 }
 

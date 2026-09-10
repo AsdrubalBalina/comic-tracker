@@ -272,7 +272,7 @@ const deleteComic = async (req, res) => {
 };
 
 async function importComic(req, res) {
-  const client = await pool.connect();
+  let client;
 
   try {
     const { externalId } = req.body;
@@ -282,6 +282,12 @@ async function importComic(req, res) {
         error: "externalId es obligatorio",
       });
     }
+
+    console.log(
+      `[IMPORT] Iniciando importación ${externalId}`
+    );
+
+    client = await pool.connect();
 
     const existingComic = await client.query(
       `
@@ -294,89 +300,115 @@ async function importComic(req, res) {
     );
 
     if (existingComic.rows.length > 0) {
+      console.log(
+        `[IMPORT] ${externalId} ya existe`
+      );
+
       return res.status(409).json({
         error: "Este cómic ya está en tu colección",
       });
     }
 
-    const issue = await getIssueById(externalId);
+    console.log(
+      "[IMPORT] Consultando Metron..."
+    );
+
+    const issue =
+      await getIssueById(externalId);
+
+    console.log(
+      `[IMPORT] Metron respondió. Créditos: ${issue.creators.length}`
+    );
 
     await client.query("BEGIN");
 
     const writers = issue.creators
       .filter(
-        (creator) => creator.role === "Writer"
+        (creator) =>
+          creator.role === "Writer"
       )
-      .map((creator) => creator.name);
+      .map(
+        (creator) => creator.name
+      );
 
     const artists = issue.creators
       .filter(
-        (creator) => creator.role === "Artist"
+        (creator) =>
+          creator.role === "Artist"
       )
-      .map((creator) => creator.name);
+      .map(
+        (creator) => creator.name
+      );
 
-    const comicResult = await client.query(
-      `
-      INSERT INTO comics (
-        title,
-        series,
-        issue_number,
-        publisher,
-        writer,
-        artist,
-        cover_url,
-        publication_year,
-        read_status,
-        external_id,
-        external_source,
-        description,
-        store_date
-      )
-      VALUES (
-        $1, $2, $3, $4, $5, $6, $7,
-        $8, $9, $10, $11, $12, $13
-      )
-      RETURNING *
-      `,
-      [
-        issue.series.name,
-        issue.series.name,
-        issue.issueNumber,
-        issue.publisher,
-        writers.join(", ") || null,
-        artists.join(", ") || null,
-        issue.coverUrl,
-        issue.publicationYear,
-        "pending",
-        issue.externalId,
-        issue.source,
-        issue.description,
-        issue.storeDate,
-      ]
-    );
-
-    const comic = comicResult.rows[0];
-
-    for (const creator of issue.creators) {
-      const creatorResult = await client.query(
+    const comicResult =
+      await client.query(
         `
-        INSERT INTO creators (
-          name,
-          metron_id
+        INSERT INTO comics (
+          title,
+          series,
+          issue_number,
+          publisher,
+          writer,
+          artist,
+          cover_url,
+          publication_year,
+          read_status,
+          external_id,
+          external_source,
+          description,
+          store_date
         )
-        VALUES ($1, $2)
-
-        ON CONFLICT (metron_id)
-        DO UPDATE SET
-          name = EXCLUDED.name
-
-        RETURNING id
+        VALUES (
+          $1, $2, $3, $4, $5, $6, $7,
+          $8, $9, $10, $11, $12, $13
+        )
+        RETURNING *
         `,
         [
-          creator.name,
-          creator.externalId,
+          issue.series.name,
+          issue.series.name,
+          issue.issueNumber,
+          issue.publisher,
+          writers.join(", ") || null,
+          artists.join(", ") || null,
+          issue.coverUrl,
+          issue.publicationYear,
+          "pending",
+          issue.externalId,
+          issue.source,
+          issue.description,
+          issue.storeDate,
         ]
       );
+
+    const comic =
+      comicResult.rows[0];
+
+    console.log(
+      "[IMPORT] Cómic insertado. Guardando creadores..."
+    );
+
+    for (const creator of issue.creators) {
+      const creatorResult =
+        await client.query(
+          `
+          INSERT INTO creators (
+            name,
+            metron_id
+          )
+          VALUES ($1, $2)
+
+          ON CONFLICT (metron_id)
+          DO UPDATE SET
+            name = EXCLUDED.name
+
+          RETURNING id
+          `,
+          [
+            creator.name,
+            creator.externalId,
+          ]
+        );
 
       const creatorId =
         creatorResult.rows[0].id;
@@ -400,22 +432,57 @@ async function importComic(req, res) {
       );
     }
 
+    console.log(
+      "[IMPORT] Creadores guardados"
+    );
+
     await client.query("COMMIT");
 
-    res.status(201).json(comic);
+    console.log(
+      "[IMPORT] COMMIT completado"
+    );
+
+    return res
+      .status(201)
+      .json(comic);
+
   } catch (error) {
-    await client.query("ROLLBACK");
+    if (client) {
+      try {
+        await client.query("ROLLBACK");
+      } catch (rollbackError) {
+        console.error(
+          "Error haciendo rollback:",
+          rollbackError
+        );
+      }
+    }
+
+    if (
+      error.code === "23505" &&
+      error.constraint ===
+        "unique_external_comic"
+    ) {
+      return res.status(409).json({
+        error:
+          "Este cómic ya está en tu colección",
+      });
+    }
 
     console.error(
       "Error importando cómic:",
       error
     );
 
-    res.status(500).json({
-      error: "No se pudo importar el cómic",
+    return res.status(500).json({
+      error:
+        "No se pudo importar el cómic",
     });
+
   } finally {
-    client.release();
+    if (client) {
+      client.release();
+    }
   }
 }
 
