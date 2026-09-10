@@ -1,7 +1,5 @@
 const comicList = document.getElementById("comic-list");
 
-let editingComicId = null;
-
 async function loadComics() {
   try {
     const search = document.getElementById("search")?.value.trim() || "";
@@ -57,78 +55,108 @@ async function loadComics() {
     comics.forEach((comic) => {
       const comicElement = document.createElement("article");
 
-      comicElement.innerHTML = `
-        ${
+      const statusLabels = {
+        pending: "Pendiente",
+        reading: "Leyendo",
+        read: "Leído",
+        };
+
+        const ratingStars = comic.rating
+        ? "★".repeat(comic.rating) +
+            "☆".repeat(5 - comic.rating)
+        : "Sin valorar";
+
+        comicElement.innerHTML = `
+        <div class="comic-cover-container">
+
+            ${
             comic.cover_url
-            ? `
+                ? `
                 <img
-                class="comic-cover"
-                src="${comic.cover_url}"
-                alt="Portada de ${comic.title}"
+                    class="comic-cover"
+                    src="${comic.cover_url}"
+                    alt="Portada de ${comic.title}"
+                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
                 >
-            `
-            : `
+                `
+                : `
                 <div class="comic-cover-placeholder">
-                Sin portada
+                    <span>Sin portada</span>
                 </div>
-            `
-        }
+                `
+            }
 
-        <h3>${comic.title}</h3>
+            <span class="comic-status comic-status-${comic.read_status}">
+            ${statusLabels[comic.read_status] || comic.read_status}
+            </span>
 
-        <p>
-            <strong>Serie:</strong>
-            ${comic.series || "Sin especificar"}
-        </p>
+        </div>
 
-        <p>
-            <strong>Número:</strong>
-            ${comic.issue_number || "Sin especificar"}
-        </p>
+        <div class="comic-info">
 
-        <p>
-            <strong>Editorial:</strong>
-            ${comic.publisher || "Sin especificar"}
-        </p>
+            <div class="comic-main-info">
 
-        <p>
-            <strong>Guionista:</strong>
-            ${comic.writer || "Sin especificar"}
-        </p>
+            <h3>${comic.title}</h3>
 
-        <p>
-            <strong>Dibujante:</strong>
-            ${comic.artist || "Sin especificar"}
-        </p>
+            <p class="comic-series">
+                ${comic.series || "Sin serie"}
+                ${
+                comic.publication_year
+                    ? ` · ${comic.publication_year}`
+                    : ""
+                }
+            </p>
 
-        <p>
-            <strong>Personaje:</strong>
-            ${comic.main_character || "Sin especificar"}
-        </p>
+            </div>
 
-        <p>
-            <strong>Año:</strong>
-            ${comic.publication_year || "Sin especificar"}
-        </p>
+            <div class="comic-creators">
 
-        <p>
-            <strong>Estado:</strong>
-            ${comic.read_status}
-        </p>
+            ${
+                comic.writer
+                ? `
+                    <p>
+                    <span>Guion</span>
+                    ${comic.writer}
+                    </p>
+                `
+                : ""
+            }
 
-        <p>
-            <strong>Valoración:</strong>
-            ${comic.rating ? `${comic.rating}/5` : "Sin valorar"}
-        </p>
+            ${
+                comic.artist
+                ? `
+                    <p>
+                    <span>Dibujo</span>
+                    ${comic.artist}
+                    </p>
+                `
+                : ""
+            }
 
-        <div class="comic-actions">
-            <button class="edit-button" data-id="${comic.id}">
-            Editar
+            </div>
+
+            <div class="comic-rating">
+            ${ratingStars}
+            </div>
+
+            <div class="comic-actions">
+
+            <button
+                class="edit-button"
+                data-id="${comic.id}"
+            >
+                Editar
             </button>
 
-            <button class="delete-button" data-id="${comic.id}">
-            Eliminar
+            <button
+                class="delete-button"
+                data-id="${comic.id}"
+            >
+                Eliminar
             </button>
+
+            </div>
+
         </div>
         `;
 
@@ -150,12 +178,12 @@ function addComicActionListeners() {
   const deleteButtons = document.querySelectorAll(".delete-button");
 
   editButtons.forEach((button) => {
-    button.addEventListener("click", async () => {
-      const comicId = button.dataset.id;
-
-      await editComic(comicId);
+  button.addEventListener("click", () => {
+    const comicId = button.dataset.id;
+    editComic(comicId);
     });
   });
+  
 
   deleteButtons.forEach((button) => {
     button.addEventListener("click", async () => {
@@ -166,8 +194,8 @@ function addComicActionListeners() {
   });
 }
 
-async function editComic(id) {
-  window.location.href = `/add-comic.html?id=${id}`;
+function editComic(id) {
+  window.location.assign(`/add-comic.html?id=${id}`);
 }
 
 async function deleteComic(id) {
@@ -188,24 +216,11 @@ async function deleteComic(id) {
       throw new Error("No se pudo eliminar el cómic");
     }
 
-    formMessage.textContent =
-      "Cómic eliminado correctamente.";
+    window.location.reload();
 
-    if (editingComicId === id) {
-      editingComicId = null;
-      comicForm.reset();
-
-      document.querySelector(
-        '#comic-form button[type="submit"]'
-      ).textContent = "Añadir cómic";
-    }
-
-    await loadComics();
   } catch (error) {
     console.error(error);
-
-    formMessage.textContent =
-      "Error al eliminar el cómic.";
+    alert("Error al eliminar el cómic.");
   }
 }
 

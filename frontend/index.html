@@ -2,86 +2,157 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
   <title>Comic Tracker</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+  href="https://fonts.googleapis.com/css2?family=Bangers&family=Barlow+Condensed:wght@400;500;600;700;800&family=Bowlby+One+SC&display=swap"
+  rel="stylesheet"
+  >
   <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-  <header>
-    <h1>Comic Tracker</h1>
-    <p>Mi colección de cómics</p>
-  </header>
 
-  <main>
-    
+  <header class="main-header">
+    <div class="header-orbit orbit-one"></div>
+    <div class="header-orbit orbit-two"></div>
 
-  <section class="filters">
-  <h2>Buscar y filtrar</h2>
+    <div class="atomic-star star-one">✦</div>
+    <div class="atomic-star star-two">✧</div>
+    <div class="atomic-star star-three">✦</div>
 
-  <div class="filter-controls">
-    <div>
-      <label for="search">Buscar</label>
-      <input
-        type="text"
-        id="search"
-        placeholder="Título, serie o personaje"
-      >
+    <div class="header-content">
+        <div class="logo-sign">
+        <span class="logo-kicker">The cosmic</span>
+
+        <h1>Comic Tracker</h1>
+
+        <p>
+            Tu colección personal de cómics
+        </p>
+        </div>
     </div>
+    </header>
 
-    <div>
-      <label for="publisher-filter">Editorial</label>
-      <input
-        type="text"
-        id="publisher-filter"
-        placeholder="Ej. DC Comics"
-      >
-    </div>
+  <main class="main-content">
 
-    <div>
-      <label for="status-filter">Estado</label>
-      <select id="status-filter">
-        <option value="">Todos</option>
-        <option value="pending">Pendiente</option>
-        <option value="reading">Leyendo</option>
-        <option value="read">Leído</option>
-      </select>
-    </div>
+    <section class="collection-header">
+      <div>
+        <h2>Mi colección</h2>
+        <p>
+          Explora, organiza y gestiona tus cómics.
+        </p>
+      </div>
+    </section>
 
-    <div>
-      <label for="sort">Ordenar por</label>
-      <select id="sort">
-        <option value="">Por defecto</option>
-        <option value="title_asc">Título A-Z</option>
-        <option value="title_desc">Título Z-A</option>
-        <option value="year_desc">Año: más reciente</option>
-        <option value="year_asc">Año: más antiguo</option>
-        <option value="rating_desc">Valoración: mayor</option>
-        <option value="rating_asc">Valoración: menor</option>
-      </select>
-    </div>
+    <section class="filters">
+      <div class="filter-controls">
 
-    <button type="button" id="apply-filters">
-      Aplicar filtros
-    </button>
+        <div class="filter-field search-field">
+          <label for="search">Buscar</label>
 
-    <button type="button" id="clear-filters">
-      Limpiar
-    </button>
-  </div>
-</section>
+          <input
+            type="text"
+            id="search"
+            placeholder="Título, serie o personaje"
+          >
+        </div>
 
-  <p id="form-message"></p>
-</section>
+        <div class="filter-field">
+          <label for="publisher-filter">
+            Editorial
+          </label>
+
+          <input
+            type="text"
+            id="publisher-filter"
+            placeholder="DC Comics"
+          >
+        </div>
+
+        <div class="filter-field">
+          <label for="status-filter">
+            Estado
+          </label>
+
+          <select id="status-filter">
+            <option value="">Todos</option>
+            <option value="pending">Pendiente</option>
+            <option value="reading">Leyendo</option>
+            <option value="read">Leído</option>
+          </select>
+        </div>
+
+        <div class="filter-field">
+          <label for="sort">
+            Ordenar
+          </label>
+
+          <select id="sort">
+            <option value="">Por defecto</option>
+            <option value="title_asc">
+              Título A-Z
+            </option>
+            <option value="title_desc">
+              Título Z-A
+            </option>
+            <option value="year_desc">
+              Más reciente
+            </option>
+            <option value="year_asc">
+              Más antiguo
+            </option>
+            <option value="rating_desc">
+              Mejor valorados
+            </option>
+            <option value="rating_asc">
+              Peor valorados
+            </option>
+          </select>
+        </div>
+
+        <div class="filter-buttons">
+          <button
+            type="button"
+            id="apply-filters"
+            class="primary-button"
+          >
+            Aplicar
+          </button>
+
+          <button
+            type="button"
+            id="clear-filters"
+            class="secondary-button"
+          >
+            Limpiar
+          </button>
+        </div>
+
+      </div>
+    </section>
+
     <section>
-      <h2>Mi Colección</h2>
       <div id="comic-list"></div>
     </section>
+
   </main>
 
-  <a href="/add-comic.html" class="add-comic-button">
+  <a
+    href="/add-comic.html"
+    class="add-comic-button"
+  >
     + Añadir cómic
   </a>
 
   <script src="app.js"></script>
+
 </body>
 </html>

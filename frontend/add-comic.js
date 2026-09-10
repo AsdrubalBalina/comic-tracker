@@ -157,7 +157,7 @@ comicForm.addEventListener("submit", async (event) => {
   }
 });
 
-function createCatalogResult(issue) {
+function createCatalogResult(issue, collectionIds) {
   const article = document.createElement("article");
   article.classList.add("catalog-result");
 
@@ -216,10 +216,30 @@ function createCatalogResult(issue) {
 
   button.type = "button";
   button.classList.add("catalog-select-button");
+
+  const alreadyAdded =
+  collectionIds.has(Number(issue.externalId));
+
+  if (alreadyAdded) {
+  button.textContent = "Ya en tu colección";
+  button.disabled = true;
+} else {
   button.textContent = "Añadir a mi colección";
 
-  button.addEventListener("click", () => {
-    loadCatalogIssue(issue.externalId);
+  button.addEventListener("click", async () => {
+    await importComicFromCatalog(
+      issue.externalId,
+      button
+    );
+
+    collectionIds.add(
+      Number(issue.externalId)
+    );
+  });
+}
+
+  button.addEventListener("click", async () => {
+    await importComicFromCatalog(issue.externalId, button);
   });
 
   info.appendChild(title);
@@ -230,6 +250,30 @@ function createCatalogResult(issue) {
   article.appendChild(info);
 
   return article;
+}
+
+async function getCollectionExternalIds() {
+  const response = await fetch("/api/comics");
+
+  if (!response.ok) {
+    throw new Error(
+      "No se pudo consultar la colección"
+    );
+  }
+
+  const comics = await response.json();
+
+  return new Set(
+    comics
+      .filter(
+        (comic) =>
+          comic.external_source === "metron" &&
+          comic.external_id !== null
+      )
+      .map(
+        (comic) => Number(comic.external_id)
+      )
+  );
 }
 
 async function searchCatalog(series) {
@@ -254,6 +298,7 @@ async function searchCatalog(series) {
     }
 
     const data = await response.json();
+    const collectionIds = await getCollectionExternalIds();
 
     catalogMessage.textContent = "";
 
@@ -265,10 +310,13 @@ async function searchCatalog(series) {
     }
 
     data.results.forEach((issue) => {
-      catalogResults.appendChild(
-        createCatalogResult(issue)
-      );
-    });
+    catalogResults.appendChild(
+      createCatalogResult(
+        issue,
+        collectionIds
+      )
+    );
+  });
   } catch (error) {
     console.error(error);
 
@@ -379,5 +427,66 @@ catalogSearchForm.addEventListener(
     searchCatalog(query);
   }
 );
+
+async function importComicFromCatalog(
+  externalId,
+  button
+) {
+  const originalText = button.textContent;
+
+  button.disabled = true;
+  button.textContent = "Añadiendo...";
+
+  catalogMessage.textContent =
+    "Añadiendo cómic a tu colección...";
+
+  try {
+    const response = await fetch(
+      "/api/comics/import",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          externalId,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (response.status === 409) {
+      catalogMessage.textContent =
+      "Este cómic ya está en tu colección.";
+
+      button.textContent = "Ya en tu colección";
+      button.disabled = true;
+
+      return;
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+        "No se pudo importar el cómic"
+      );
+    }
+
+    catalogMessage.textContent = "Cómic añadido correctamente.";
+
+    button.textContent = "Ya en tu colección";
+    button.disabled = true;
+    
+  } catch (error) {
+    console.error(error);
+
+    catalogMessage.textContent =
+      "No se pudo añadir el cómic.";
+
+    button.disabled = false;
+    button.textContent = originalText;
+  }
+}
 
 loadComicForEditing();
