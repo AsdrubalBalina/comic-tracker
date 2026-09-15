@@ -40,22 +40,23 @@ CREATE TABLE comics (
         ),
 
     CONSTRAINT valid_rating
-        CHECK (
-            rating IS NULL
-            OR rating BETWEEN 1 AND 5
-        )
-    
-    CREATE UNIQUE INDEX unique_external_comic
-    ON comics (external_source, external_id)
-    WHERE external_id IS NOT NULL;
+    CHECK (
+        rating IS NULL
+        OR rating BETWEEN 1 AND 5
+    )
+);
 
-    CREATE TABLE creators (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        metron_id INTEGER UNIQUE
-    );
+CREATE UNIQUE INDEX unique_external_comic
+ON comics (external_source, external_id)
+WHERE external_id IS NOT NULL;
 
-    CREATE TABLE comic_creators (
+CREATE TABLE creators (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    metron_id INTEGER UNIQUE
+);
+
+CREATE TABLE comic_creators (
     comic_id INTEGER NOT NULL
         REFERENCES comics(id)
         ON DELETE CASCADE,
@@ -70,6 +71,5 @@ CREATE TABLE comics (
         comic_id,
         creator_id,
         role
-        )
-    );
-)
+    )
+);
