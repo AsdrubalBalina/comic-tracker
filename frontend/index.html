@@ -43,6 +43,14 @@
 
   <main class="main-content">
 
+    <p
+      id="collection-import-feedback"
+      class="series-import-feedback"
+      role="status"
+      aria-live="polite"
+      hidden
+    ></p>
+
     <section class="collection-header">
       <div>
         <h2>Mi colección</h2>
@@ -139,8 +147,37 @@
       </div>
     </section>
 
-    <section>
+    <div class="collection-view-switcher">
+      <button
+        type="button"
+        id="comics-view-button"
+        class="view-switcher-button active"
+      >
+        Cómics
+      </button>
+
+      <button
+        type="button"
+        id="series-view-button"
+        class="view-switcher-button"
+      >
+        Series
+      </button>
+    </div>
+
+    <section id="comics-view">
       <div id="comic-list"></div>
+    </section>
+
+    <section
+      id="series-view"
+      class="series-view"
+      hidden
+    >
+      <div
+        id="series-grid"
+        class="series-grid"
+      ></div>
     </section>
 
   </main>

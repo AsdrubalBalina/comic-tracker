@@ -1231,17 +1231,16 @@ button {
 ================================================== */
 
 #comic-list {
-  display:
-    grid;
+  display: grid;
 
   grid-template-columns:
     repeat(
       auto-fill,
-      minmax(220px, 1fr)
+      minmax(220px, 260px)
     );
 
-  gap:
-    2rem;
+  gap: 2rem;
+  justify-content: start;
 }
 
 
@@ -2632,4 +2631,455 @@ body:has(#comic-form) > main {
 .catalog-selection.disabled {
   opacity: 0.5;
   cursor: default;
+}
+
+.collection-view-switcher {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  margin: 1.5rem 0 2rem;
+}
+
+.view-switcher-button {
+  padding: 0.65rem 1.4rem;
+
+  background: var(--paper);
+  color: var(--ink);
+
+  border: 3px solid var(--ink);
+  box-shadow: var(--small-shadow);
+
+  font-family: "Bangers", cursive;
+  font-size: 1.2rem;
+  letter-spacing: 1px;
+
+  cursor: pointer;
+}
+
+.view-switcher-button.active {
+  background: var(--yellow);
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.series-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      auto-fill,
+      minmax(300px, 1fr)
+    );
+
+  gap: 1.5rem;
+
+}
+
+.series-card {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+
+  background: var(--paper);
+
+  border: 4px solid var(--ink);
+  box-shadow: var(--small-shadow);
+
+  overflow: hidden;
+}
+
+
+.series-card-cover {
+  min-height: 180px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: var(--yellow);
+
+  border-right: 4px solid var(--ink);
+
+  font-family: "Bangers", cursive;
+  text-align: center;
+}
+
+.series-card-cover img {
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+}
+.series-card-content {
+  padding: 1rem;
+}
+
+.series-card-content h2 {
+  margin: 0 0 0.35rem;
+
+  font-family: "Bangers", cursive;
+  letter-spacing: 1px;
+}
+
+.series-card-content p {
+  margin: 0.3rem 0;
+}
+
+.series-owned-count {
+  font-family:
+    "Barlow Condensed",
+    sans-serif;
+
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.series-owned-issues {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+
+  margin-top: 0.8rem;
+}
+
+.series-owned-issues span {
+  padding: 0.25rem 0.45rem;
+
+  background: var(--cyan);
+
+  border: 2px solid var(--ink);
+
+  font-family:
+    "Barlow Condensed",
+    sans-serif;
+
+  font-weight: 800;
+}
+
+@media (max-width: 600px) {
+  .series-card {
+    grid-template-columns:
+      90px 1fr;
+  }
+}
+
+.series-view-button {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.55rem 0.9rem;
+
+  background: var(--yellow);
+  color: var(--ink);
+
+  border: 3px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+
+  font-weight: 800;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.series-view-button:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 var(--ink);
+}
+
+.series-view-button.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+
+.series-detail-page {
+  width: min(1200px, 92%);
+  margin: 0 auto;
+  padding: 2rem 0 4rem;
+}
+
+
+.series-detail-header {
+  padding: 1.5rem;
+
+  background: var(--yellow);
+
+  border: 4px solid var(--ink);
+  box-shadow: var(--small-shadow);
+}
+
+.series-detail-header h1 {
+  margin: 0;
+
+  font-family: "Bowlby One SC", sans-serif;
+  text-transform: uppercase;
+}
+
+.series-detail-header p {
+  margin-bottom: 0;
+
+  font-size: 1.25rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+
+.series-progress-section {
+  margin: 2rem 0;
+  padding: 1.25rem;
+
+  background: var(--paper);
+
+  border: 4px solid var(--ink);
+  box-shadow: var(--small-shadow);
+}
+
+.series-progress-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.series-progress-heading h2 {
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.series-progress-heading p {
+  font-weight: 800;
+}
+
+
+.series-progress-bar {
+  position: relative;
+
+  height: 32px;
+  margin-top: 1rem;
+
+  background: white;
+
+  border: 3px solid var(--ink);
+
+  overflow: hidden;
+}
+
+.series-progress-fill {
+  width: 0;
+  height: 100%;
+
+  background: var(--cyan);
+
+  transition: width 0.35s ease;
+}
+
+.series-progress-percentage {
+  position: absolute;
+
+  inset: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-weight: 900;
+
+  pointer-events: none;
+}
+
+
+
+
+.series-issues-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      auto-fill,
+      minmax(160px, 1fr)
+    );
+
+  gap: 1.25rem;
+}
+
+
+.series-issue-card {
+  background: var(--paper);
+
+  border: 4px solid var(--ink);
+  box-shadow: var(--small-shadow);
+
+  overflow: hidden;
+}
+
+
+.series-issue-cover {
+  aspect-ratio: 2 / 3;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: var(--cyan);
+
+  border-bottom: 4px solid var(--ink);
+}
+
+.series-issue-cover img {
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+}
+
+
+.series-issue-info {
+  min-height: 135px;
+  padding: 0.85rem;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+
+  text-align: center;
+}
+
+.series-issue-info h3 {
+  margin: 0;
+
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-style: normal;
+  line-height: 1;
+
+  letter-spacing: 0.03em;
+
+  text-align: center;
+}
+
+.issue-owned-badge,
+.issue-missing-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 30px;
+  padding: 0.3rem 0.65rem;
+
+  border: 2px solid var(--ink);
+
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.series-issue-selection {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  margin: 0.15rem 0 0;
+
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 800;
+
+  text-align: center;
+  text-transform: uppercase;
+
+  cursor: pointer;
+}
+
+
+.issue-owned-badge {
+  background: var(--cyan);
+}
+
+
+.issue-missing-badge {
+  background: var(--yellow);
+}
+
+.series-batch-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+
+  margin: 0 0 2rem;
+  padding: 1rem;
+
+  background: var(--paper);
+
+  border: 4px solid var(--ink);
+  box-shadow: var(--small-shadow);
+}
+
+.series-selection-info {
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.series-selection-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.series-selection-buttons button {
+  padding: 0.55rem 0.8rem;
+
+  background: var(--yellow);
+  color: var(--ink);
+
+  border: 3px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+
+  font-weight: 900;
+  text-transform: uppercase;
+
+  cursor: pointer;
+}
+
+.series-selection-buttons button:hover:not(:disabled) {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 var(--ink);
+}
+
+.series-selection-buttons button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+
+.series-issue-selection input {
+  width: 18px;
+  height: 18px;
+
+  accent-color: var(--cyan);
+
+  cursor: pointer;
+}
+
+.series-import-feedback {
+  margin: -0.75rem 0 1.75rem;
+  padding: 0.85rem 1rem;
+
+  background: var(--paper);
+  border: 3px solid var(--ink);
+  box-shadow: var(--small-shadow);
+
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.series-import-feedback[hidden] {
+  display: none;
 }

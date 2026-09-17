@@ -1,0 +1,61 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Ficha del cómic | Comic Tracker</title>
+
+  <link rel="stylesheet" href="/comic.css">
+  <script src="/comic.js" defer></script>
+</head>
+
+<body>
+  <header class="page-header">
+    <a class="back-link" href="/">← Volver a la colección</a>
+    <span class="brand">COMIC TRACKER</span>
+  </header>
+
+  <main class="page-content">
+    <p id="page-message" role="status">Cargando cómic...</p>
+
+    <article id="comic-detail" class="comic-detail" hidden>
+      <div class="cover-panel">
+        <div id="cover-container" class="cover-container"></div>
+        <span id="read-status" class="status-badge"></span>
+      </div>
+
+      <div class="detail-panel">
+        <p id="comic-series" class="series-name"></p>
+        <h1 id="comic-title"></h1>
+        <p id="comic-subtitle" class="comic-subtitle"></p>
+
+        <div id="comic-actions" class="comic-actions">
+          <a id="edit-link" class="edit-link" href="#">Editar cómic</a>
+        </div>
+
+        <section id="description-section" class="detail-section" hidden>
+          <h2>Sinopsis</h2>
+          <p id="comic-description" class="description"></p>
+        </section>
+
+        <section id="publication-section" class="detail-section" hidden>
+          <h2>Publicación</h2>
+          <dl id="publication-data" class="data-list"></dl>
+        </section>
+
+        <section id="creators-section" class="detail-section" hidden>
+          <h2>Autores</h2>
+          <dl id="creators-data" class="data-list"></dl>
+        </section>
+
+        <section class="detail-section">
+          <h2>Mi colección</h2>
+          <dl id="collection-data" class="data-list"></dl>
+        </section>
+      </div>
+    </article>
+  </main>
+</body>
+</html>

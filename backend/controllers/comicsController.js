@@ -2,6 +2,7 @@ const pool = require("../db");
 
 const {
   getIssueById,
+  MetronError,
 } = require("../services/metronService");
 
 const getAllComics = async (req, res) => {
@@ -356,11 +357,14 @@ async function importComic(req, res) {
           external_id,
           external_source,
           description,
-          store_date
+          store_date,
+          series_external_id,
+          series_year_began,
+          series_volume
         )
         VALUES (
           $1, $2, $3, $4, $5, $6, $7,
-          $8, $9, $10, $11, $12, $13
+          $8, $9, $10, $11, $12, $13, $14, $15, $16
         )
         RETURNING *
         `,
@@ -378,6 +382,9 @@ async function importComic(req, res) {
           issue.source,
           issue.description,
           issue.storeDate,
+          issue.series?.externalId || null,
+          issue.series?.yearBegan || null,
+          issue.series?.volume || null,
         ]
       );
 
@@ -469,6 +476,17 @@ async function importComic(req, res) {
       });
     }
 
+        if (error instanceof MetronError) {
+      console.error(
+        "Error de Metron durante la importación:",
+        error
+      );
+
+      return res.status(error.status).json({
+        error: error.message,
+      });
+    }
+
     console.error(
       "Error importando cómic:",
       error
@@ -521,6 +539,8 @@ async function importComicsBatch(
     duplicates: [],
     failed: [],
   };
+
+  let metronError = null;
 
   for (const externalId of uniqueIds) {
     try {
@@ -600,12 +620,15 @@ async function importComicsBatch(
               external_id,
               external_source,
               description,
-              store_date
+              store_date,
+              series_external_id,
+              series_year_began,
+              series_volume
             )
             VALUES (
               $1, $2, $3, $4,
               $5, $6, $7, $8,
-              $9, $10, $11, $12
+              $9, $10, $11, $12, $13, $14, $15
             )
             RETURNING *
             `,
@@ -633,6 +656,11 @@ async function importComicsBatch(
                 null,
               issue.storeDate ||
                 null,
+              issue.series?.externalId ||
+                null,
+              issue.series?.yearBegan ||
+                null,
+              issue.series?.volume || null,
             ]
           );
 
@@ -721,34 +749,56 @@ async function importComicsBatch(
       }
 
     } catch (error) {
-      console.error(
-        `Error procesando ${externalId}:`,
-        error
-      );
+  console.error(
+    `Error procesando $DIL3:`,
+    error
+  );
 
-      results.failed.push(
-        externalId
-      );
+  results.failed.push(externalId);
+
+  if (error instanceof MetronError) {
+    if (error.status === 404) {
+      // Este número no existe, pero podemos continuar
+      // con los demás.
+      continue;
     }
+
+    // Detenemos el lote para no seguir enviando
+    // peticiones cuando Metron no está disponible.
+    metronError = error;
+
+    const currentIndex =
+      uniqueIds.indexOf(externalId);
+
+    results.failed.push(
+      ...uniqueIds.slice(currentIndex + 1)
+    );
+
+    break;
+  }
+}
   }
 
-  return res.status(200).json({
-    imported:
-      results.imported,
-    duplicates:
-      results.duplicates,
-    failed:
-      results.failed,
+  return res.status(
+  metronError && results.imported.length === 0
+    ? metronError.status
+    : 200
+).json({
+  imported: results.imported,
+  duplicates: results.duplicates,
+  failed: results.failed,
 
-    summary: {
-      imported:
-        results.imported.length,
-      duplicates:
-        results.duplicates.length,
-      failed:
-        results.failed.length,
-    },
-  });
+  summary: {
+    imported: results.imported.length,
+    duplicates: results.duplicates.length,
+    failed: results.failed.length,
+  },
+
+  ...(metronError && {
+    error: metronError.message,
+  }),
+});
+
 }
 
 module.exports = {

@@ -26,6 +26,10 @@ CREATE TABLE comics (
     description TEXT,
     store_date DATE,
 
+    series_external_id INTEGER,
+    series_year_began SMALLINT,
+    series_volume INTEGER,
+
     created_at TIMESTAMP
         NOT NULL
         DEFAULT CURRENT_TIMESTAMP,

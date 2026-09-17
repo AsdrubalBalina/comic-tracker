@@ -1,4 +1,20 @@
+
 const comicList = document.getElementById("comic-list");
+
+const comicsView =
+  document.getElementById("comics-view");
+
+const comicsViewButton =
+  document.getElementById("comics-view-button");
+
+const seriesViewButton =
+  document.getElementById("series-view-button");
+
+const seriesView =
+  document.getElementById("series-view");
+
+const seriesGrid =
+  document.getElementById("series-grid");
 
 async function loadComics() {
   try {
@@ -54,6 +70,16 @@ async function loadComics() {
 
     comics.forEach((comic) => {
       const comicElement = document.createElement("article");
+
+      comicElement.style.cursor = "pointer";
+
+      comicElement.addEventListener("click", (event) => {
+        if (event.target.closest(".comic-actions")) {
+          return;
+        }
+
+        window.location.assign(`/comic.html?id=${comic.id}`);
+      });
 
       const statusLabels = {
         pending: "Pendiente",
@@ -173,6 +199,194 @@ async function loadComics() {
   }
 }
 
+function createSeriesCard(series) {
+  const article =
+    document.createElement("article");
+
+  article.classList.add(
+    "series-card"
+  );
+
+
+  // Portada
+  const cover =
+    document.createElement("div");
+
+  cover.classList.add(
+    "series-card-cover"
+  );
+
+  if (series.cover_url) {
+    const image =
+      document.createElement("img");
+
+    image.src =
+      series.cover_url;
+
+    image.alt =
+      `Portada de ${series.series}`;
+
+    image.loading = "lazy";
+
+    image.addEventListener(
+      "error",
+      () => {
+        image.remove();
+        cover.textContent =
+          "Sin portada";
+      }
+    );
+
+    cover.appendChild(image);
+  } else {
+    cover.textContent =
+      "Sin portada";
+  }
+
+
+  // Contenido
+  const content =
+    document.createElement("div");
+
+  content.classList.add(
+    "series-card-content"
+  );
+
+
+  // Título y volumen
+  const title =
+    document.createElement("h2");
+
+  title.textContent =
+    series.series_volume != null
+      ? `${series.series} (Vol. ${series.series_volume})`
+      : series.series;
+
+
+  // Editorial y año
+  const metadata =
+    document.createElement("p");
+
+  const metadataParts = [];
+
+  if (series.publisher) {
+    metadataParts.push(
+      series.publisher
+    );
+  }
+
+  if (series.series_year_began) {
+    metadataParts.push(
+      series.series_year_began
+    );
+  }
+
+  metadata.textContent =
+    metadataParts.join(" · ");
+
+
+  // Cantidad de números en la colección
+  const count =
+    document.createElement("p");
+
+  count.classList.add(
+    "series-owned-count"
+  );
+
+  count.textContent =
+    `${series.owned_count} ` +
+    `${
+      series.owned_count === 1
+        ? "número"
+        : "números"
+    } en tu colección`;
+
+
+  // Botón para acceder al volumen
+  const viewButton =
+    document.createElement("a");
+
+  viewButton.className =
+    "series-view-button";
+
+  viewButton.textContent =
+    "Ver volumen";
+
+  if (series.series_external_id) {
+    viewButton.href =
+      `/series.html?id=${series.series_external_id}`;
+  } else {
+    viewButton.textContent =
+      "Sin datos de Metron";
+
+    viewButton.classList.add(
+      "disabled"
+    );
+  }
+
+
+  // Construcción de la tarjeta
+  content.appendChild(title);
+  content.appendChild(metadata);
+  content.appendChild(count);
+  content.appendChild(viewButton);
+
+  article.appendChild(cover);
+  article.appendChild(content);
+
+  return article;
+}
+
+async function loadSeries() {
+  seriesGrid.replaceChildren();
+
+  try {
+    const response =
+      await fetch("/api/series");
+
+    if (!response.ok) {
+      throw new Error(
+        "No se pudieron cargar las series"
+      );
+    }
+
+    const series =
+      await response.json();
+
+    if (!series.length) {
+      const message =
+        document.createElement("p");
+
+      message.textContent =
+        "Todavía no tienes series en tu colección.";
+
+      seriesGrid.appendChild(
+        message
+      );
+
+      return;
+    }
+
+    series.forEach((item) => {
+      seriesGrid.appendChild(
+        createSeriesCard(item)
+      );
+    });
+  } catch (error) {
+    console.error(error);
+
+    const message =
+      document.createElement("p");
+
+    message.textContent =
+      "No se pudieron cargar las series.";
+
+    seriesGrid.appendChild(
+      message
+    );
+  }
+}
+
 function addComicActionListeners() {
   const editButtons = document.querySelectorAll(".edit-button");
   const deleteButtons = document.querySelectorAll(".delete-button");
@@ -243,4 +457,55 @@ clearFiltersButton.addEventListener("click", () => {
   loadComics();
 });
 
+const collectionImportFeedback =
+  document.getElementById("collection-import-feedback");
+
+const pendingImportFeedback =
+  sessionStorage.getItem("comicTrackerImportFeedback");
+
+if (pendingImportFeedback) {
+  collectionImportFeedback.textContent =
+    pendingImportFeedback;
+
+  collectionImportFeedback.hidden = false;
+
+  sessionStorage.removeItem(
+    "comicTrackerImportFeedback"
+  );
+}
+
 loadComics();
+
+comicsViewButton.addEventListener(
+  "click",
+  () => {
+    seriesView.hidden = true;
+    comicsView.hidden = false;
+
+    comicsViewButton.classList.add(
+      "active"
+    );
+
+    seriesViewButton.classList.remove(
+      "active"
+    );
+  }
+);
+
+seriesViewButton.addEventListener(
+  "click",
+  async () => {
+    comicsView.hidden = true;
+    seriesView.hidden = false;
+
+    seriesViewButton.classList.add(
+      "active"
+    );
+
+    comicsViewButton.classList.remove(
+      "active"
+    );
+
+    await loadSeries();
+  }
+);

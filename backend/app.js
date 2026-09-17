@@ -10,6 +10,7 @@ const express = require("express");
 const path = require("path");
 const catalogRoutes = require("./routes/catalogRoutes");
 const comicsRoutes = require("./routes/comicsRoutes");
+const seriesRoutes = require("./routes/seriesRoutes");
 
 const app = express();
 
@@ -23,5 +24,6 @@ app.get("/", (req, res) => {
 
 app.use("/api/comics", comicsRoutes);
 app.use("/api/catalog", catalogRoutes);
+app.use("/api/series", seriesRoutes);
 
 module.exports = app;
