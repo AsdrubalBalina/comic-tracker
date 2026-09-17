@@ -2,59 +2,52 @@
 
 A full-stack web application for managing personal comic book collections, built with Node.js, Express, PostgreSQL, and vanilla JavaScript.
 
-Comic Tracker allows users to manually manage their collection or search for comic book issues through the Metron API and import their metadata directly into the application.
+Comic Tracker lets users manage their collection manually or discover and import comic book issues through the Metron API. It includes individual comic detail pages, series-based navigation, reading progress, and batch imports.
 
 ## Features
 
+### Collection management
+
 * Create, view, update, and delete comics
+* Open an individual detail page for each comic
+* View covers, descriptions, publication information, and creators
 * Search comics in the local collection
-* Filter comics by publisher and reading status
-* Sort comics by title, publication year, and rating
+* Filter by publisher and reading status
+* Sort by title, publication year, and rating
 * Track reading status and personal ratings
+* Browse the collection by individual comics or series
+* View owned and missing issues within a series
+* Responsive web interface
+
+### Metron integration
+
 * Search the external Metron comic catalog
-* Filter Metron searches by series, issue number, and year
+* Filter searches by series, issue number, and year
 * Navigate paginated catalog results
-* Import individual comics from Metron
-* Select and import multiple comics in batches
-* Automatically import comic metadata, covers, creators, and creator roles
+* Import individual comics or multiple selected issues
+* Automatically import metadata, covers, creators, and creator roles
 * Prevent duplicate external imports
+* Retrieve series issues with in-memory caching
+* Handle external API errors, including rate limits and service unavailability
+
+### Backend and testing
+
+* REST API built with Express
 * PostgreSQL transactions with rollback for comic imports
 * Separate development and test databases
-* REST API integration tests with Jest and Supertest
+* Automated tests with Jest and Supertest
 * Docker-based PostgreSQL environment
-* Responsive web interface
 
 ## Tech Stack
 
-### Backend
-
-* Node.js
-* Express.js
-* PostgreSQL
-* `pg`
-* `dotenv`
-
-### Frontend
-
-* HTML5
-* CSS3
-* Vanilla JavaScript
-* Fetch API
-
-### Testing
-
-* Jest
-* Supertest
-
-### Infrastructure
-
-* Docker
-* Docker Compose
-* PostgreSQL 16
-
-### External API
-
-* Metron API
+| Area           | Technologies                               |
+| -------------- | ------------------------------------------ |
+| Backend        | Node.js, Express.js, `pg`, `dotenv`        |
+| Frontend       | HTML5, CSS3, vanilla JavaScript, Fetch API |
+| Database       | PostgreSQL 16                              |
+| Testing        | Jest, Supertest                            |
+| Infrastructure | Docker, Docker Compose                     |
+| External API   | Metron API                                 |
 
 ## Project Structure
 
@@ -71,6 +64,15 @@ comic-tracker/
 ├── database/
 │   └── init.sql
 ├── frontend/
+│   ├── index.html
+│   ├── app.js
+│   ├── comic.html
+│   ├── comic.js
+│   ├── comic.css
+│   ├── series.html
+│   ├── series.js
+│   ├── add-comic.html
+│   └── add-comic.js
 ├── .env.example
 ├── .env.test.example
 ├── docker-compose.yml
@@ -78,7 +80,9 @@ comic-tracker/
 └── README.md
 ```
 
-The backend follows a separation of concerns between routes, controllers, services, and database configuration.
+The backend separates routing, request handling, external API services, and database configuration.
+
+The Express server serves both the REST API and the static frontend.
 
 ## Database
 
@@ -86,34 +90,40 @@ Comic Tracker uses PostgreSQL as its relational database.
 
 The main data model includes:
 
-* `comics` — comic information, reading status, ratings, and external metadata
+* `comics` — comic information, reading status, ratings, series identifiers, and external metadata
 * `creators` — creators imported from external sources
-* `comic_creators` — many-to-many relationship between comics and creators, including their role
+* `comic_creators` — many-to-many relationship between comics and creators, including their roles
 
-A unique index on the external source and comic identifier prevents the same external comic from being imported multiple times.
+A unique index on the external source and comic identifier prevents duplicate external imports.
 
 Creator relationships use foreign keys with cascading deletion.
 
 ## Metron Integration
 
-Comic Tracker integrates with the Metron API to retrieve comic book information.
+Comic Tracker integrates with the Metron API to retrieve comic book information, including:
 
-The integration supports:
-
-* Searching by series
-* Filtering by issue number
-* Filtering by publication year
-* Paginated results
-* Comic detail retrieval
+* Series and issue information
 * Cover images
 * Publisher information
 * Publication dates
 * Descriptions
 * Creators and their roles
 
-API authentication is configured through the `METRON_API_TOKEN` environment variable.
-
 Imported data is normalized by the backend before being stored in PostgreSQL.
+
+### Error handling
+
+The Metron service centralizes external API requests and handles network failures, authentication errors, rate limits, unavailable resources, and invalid responses.
+
+When Metron returns a rate-limit error during a batch import, the application stops requesting additional issues while preserving comics that were successfully imported earlier in the batch.
+
+### Series issue caching
+
+Series issue lists are cached in memory for 15 minutes to reduce repeated requests to Metron.
+
+Concurrent requests for the same series share an in-progress request. Incomplete or failed downloads are not stored in the cache.
+
+The cache is temporary and is cleared when the backend process restarts.
 
 ## Import Transactions
 
@@ -121,7 +131,7 @@ External comic imports use PostgreSQL transactions to keep related database oper
 
 A comic and its associated creators are inserted as part of the import process. If an operation fails, the transaction is rolled back instead of leaving partially imported data in the database.
 
-Batch imports also detect duplicate identifiers and report comics as imported, duplicated, or failed.
+Batch imports detect duplicate identifiers and return a summary of imported, duplicated, and failed issues.
 
 ## Requirements
 
@@ -151,31 +161,33 @@ npm install
 
 Create your development environment file from the provided example.
 
-On Windows PowerShell:
+**Windows PowerShell:**
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-On macOS/Linux:
+**macOS/Linux:**
 
 ```bash
 cp .env.example .env
 ```
 
-Configure the required variables in `.env`:
+Configure the required variables in `.env` using the values defined for your local database:
 
-```env
+```dotenv
 DB_USER=comic_user
 DB_HOST=localhost
 DB_NAME=comic_tracker
-DB_PASSWORD=comic_password
+DB_PASSWORD=your_database_password
 DB_PORT=5432
 
 METRON_API_TOKEN=your_metron_api_token
 ```
 
-Replace `your_metron_api_token` with your own Metron API token.
+Replace the placeholder values with your own database credentials and Metron API token.
+
+Do not commit `.env`, `.env.test`, or real credentials to version control.
 
 ## Starting the Database
 
@@ -185,14 +197,14 @@ Start the development and test PostgreSQL containers:
 docker compose up -d
 ```
 
-Docker Compose creates:
+Docker Compose provides:
 
 * Development database on port `5432`
 * Test database on port `5433`
 
-The database schema is automatically initialized from `database/init.sql`.
+The database schema is initialized from `database/init.sql`.
 
-To check the containers:
+Check the containers:
 
 ```bash
 docker compose ps
@@ -212,23 +224,27 @@ Then open:
 http://localhost:3000
 ```
 
-The Express server provides both the REST API and the static frontend.
+From the collection, select a comic card to open its individual detail page.
+
+The detail page displays the available comic metadata and provides links to return to the collection or edit the comic.
 
 ## Running Tests
 
-Create the test environment file:
+Create the test environment file.
 
-Windows PowerShell:
+**Windows PowerShell:**
 
 ```powershell
 Copy-Item .env.test.example .env.test
 ```
 
-macOS/Linux:
+**macOS/Linux:**
 
 ```bash
 cp .env.test.example .env.test
 ```
+
+Configure `.env.test` with the credentials and port of the dedicated test database.
 
 Make sure the test PostgreSQL container is running, then execute:
 
@@ -236,24 +252,23 @@ Make sure the test PostgreSQL container is running, then execute:
 npm test
 ```
 
-The current integration test suite covers:
+The automated tests cover:
 
-* Retrieving the comic collection
-* Handling nonexistent comics
-* Request validation
-* Creating comics
-* Retrieving individual comics
-* Updating comics
-* Deleting comics
-* Verifying deletion
+* Comic CRUD operations and request validation
+* Metron API error handling
+* Series issue caching
+* Concurrent request deduplication
+* Prevention of caching incomplete results
+* Batch import behavior when Metron reaches its rate limit
+* Preservation of successful imports when a later request fails
 
-Tests use a dedicated PostgreSQL database instead of the development database.
+The CRUD integration tests use a dedicated PostgreSQL database instead of the development database. Metron service and batch import tests use mocks to verify external API and database interactions.
 
 ## REST API
 
 ### Comics
 
-```text
+```http
 GET    /api/comics
 GET    /api/comics/:id
 POST   /api/comics
@@ -265,34 +280,40 @@ Collection queries support search, publisher filtering, reading-status filtering
 
 ### External Catalog
 
-```text
+```http
 GET /api/catalog/search
 GET /api/catalog/issues/:id
 ```
 
+### Series
+
+```http
+GET /api/series
+GET /api/series/:id/issues
+```
+
 ### Imports
 
-```text
+```http
 POST /api/comics/import
 POST /api/comics/import-batch
 ```
 
 ## Testing Status
 
-Current automated test suite:
+Latest verified local test run:
 
 ```text
-Test Suites: 1 passed, 1 total
-Tests:       8 passed, 8 total
+Tests: 16 passed, 16 total
 ```
 
 ## Project Status
 
-Comic Tracker is currently under active development.
+Comic Tracker is under active development.
 
-Current functionality includes collection management, filtering and sorting, Metron catalog integration, transactional imports, batch importing, duplicate prevention, Dockerized PostgreSQL databases, and automated CRUD integration tests.
+The application currently supports collection management, individual comic detail pages, series navigation, reading progress, filtering and sorting, Metron catalog integration, transactional imports, batch importing, duplicate prevention, Dockerized PostgreSQL databases, and automated testing.
 
-Future development may include expanded automated testing for external catalog and import functionality, additional collection-management features, and further backend validation.
+Potential future improvements include expanded test coverage, richer creator information on comic detail pages, and additional collection-management features.
 
 ## Author
 
